@@ -1,2 +1,5 @@
-// Placeholder: Dashboard — Visão geral com métricas e tarefas urgentes
-export {}
+// Linhas abaixo só para teste
+export default function Dashboard() {
+    return <h1>Dashboard</h1>;
+}
+
