@@ -10,10 +10,11 @@ class TaskPriority(str, Enum):
     MEDIA = "media"
     ALTA = "alta"
 
+# fix: alinhando a tabela no supabase: CREATE TYPE task_status AS ENUM ('pendente', 'em andamento', 'concluida');
 class TaskStatus(str, Enum):
     PENDENTE = "pendente"
-    EM_ANDAMENTO = "em_andamento"
-    FINALIZADA = "finalizada"
+    EM_ANDAMENTO = "em andamento"
+    CONCLUIDA = "concluida"
 
 class TaskBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200, description="Título da tarefa")
