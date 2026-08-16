@@ -1,2 +1,5 @@
-// Placeholder: Login — Página de login
-export {}
+// Linhas abaixo só para teste
+export default function Login() {
+    return <h1>Login</h1>;
+}
+
