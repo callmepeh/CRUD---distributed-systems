@@ -1,3 +1,11 @@
+# Dependências
+node_modules/
+
+# Build
+build/
+
+# Sistema operacional / editores
+.DS_Store
 # ==============================================================================
 # Root .gitignore — Proteção global do repositório
 # ==============================================================================
