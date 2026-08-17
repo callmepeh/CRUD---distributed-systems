@@ -1,32 +1,58 @@
-# React + TypeScript + Vite
+# TaskCare — Frontend (React + Vite + TypeScript)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Interface do CRUD de tarefas, construída com **React 19**, **Vite**, **TypeScript**,
+**Tailwind CSS** e **Supabase** (autenticação por e-mail/senha).
 
-Currently, two official plugins are available:
+## Como rodar
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev        # http://localhost:5173
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Para autenticação, crie um arquivo `.env` a partir do `.env.example`:
+
+```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+## Estrutura
+
+```
+src/
+├── components/   # Layout, Sidebar, StatCard, TaskModal, ProtectedRoute
+├── context/      # AuthContext (sessão global via onAuthStateChange)
+├── pages/        # Login, Register, Dashboard, Tasks
+├── services/     # supabase.ts, api.ts (axios + token JWT) e taskStore.ts (mock)
+└── types.ts      # Tipos do domínio (Task, Priority, Status)
+```
+
+> As páginas **Dashboard** e **Tasks** ainda usam dados mockados (`services/taskStore.ts`).
+> Quando o backend estiver pronto, basta trocar o `taskStore` pelas chamadas em `services/api.ts`.
+
+## Design e métricas de IHC aplicadas
+
+O layout segue as **heurísticas de usabilidade de Nielsen** e boas práticas de
+Interação Humano-Computador (IHC):
+
+| Heurística | Onde foi aplicada |
+| --- | --- |
+| **Visibilidade do estado do sistema** | Mensagens de sucesso/erro em todas as ações de CRUD |
+| **Controle e liberdade do usuário** | Botão cancelar no modal, confirmação antes de excluir, logout acessível |
+| **Consistência e padrões** | Paleta única (azul/slate), badges de status/prioridade, componentes reutilizáveis |
+| **Prevenção de erros** | Validação de título/data no formulário, botão desabilitado durante loading |
+| **Reconhecimento em vez de lembrança** | Labels visíveis nos formulários, filtros de status em pílulas |
+| **Estética e design minimalista** | Hierarquia clara, espaçamento generoso, sem excesso de informação |
+| **Acessibilidade** | Labels e `aria-label` nos botões de ícone, contraste adequado, foco visível |
+
+Também foram consideradas as métricas de **eficácia** (ações completadas com
+feedback), **eficiência** (atalhos visuais: concluir tarefa com 1 clique) e
+**satisfação** (design limpo e responsivo).
+
+## Build, lint e testes
+
+```bash
+npm run build   # tsc + vite build
+npm run lint    # oxlint
+```
