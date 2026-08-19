@@ -10,7 +10,11 @@ class Settings:
     SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "")
 
-    FRONTEND_ORIGIN: str = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+    FRONTEND_ORIGINS: list[str] = [
+        o.strip()
+        for o in os.getenv("FRONTEND_ORIGIN", "http://localhost:5173").split(",")
+        if o.strip()
+    ]
 
     def validate(self) -> None:
         missing = [
