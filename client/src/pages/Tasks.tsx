@@ -207,30 +207,98 @@ export default function Tasks() {
                     </span>
                   )}
                 </div>
-              </div>
-
-              <div className="flex gap-1 shrink-0">
                 <button
-                  onClick={() => openEdit(task)}
-                  aria-label="Editar tarefa"
-                  className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    onClick={openCreate}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm"
                 >
-                  <Pencil size={18} />
+                    <Plus size={18} /> Nova Tarefa
                 </button>
-                <button
-                  onClick={() => handleDelete(task)}
-                  aria-label="Excluir tarefa"
-                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+            </div>
 
-      {modalOpen && <TaskModal initial={editing} onClose={() => setModalOpen(false)} onSave={handleSave} />}
-    </div>
-  );
+            {notice && (
+                <div
+                    className={`mb-4 p-3 rounded-lg text-sm border ${notice.type === 'success'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-red-50 text-red-700 border-red-200'
+                        }`}
+                >
+                    {notice.text}
+                </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 mb-6">
+                {filters.map((f) => (
+                    <button
+                        key={f.key}
+                        onClick={() => setFilter(f.key)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filter === f.key
+                                ? 'bg-slate-800 text-white'
+                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                            }`}
+                    >
+                        {f.label}
+                    </button>
+                ))}
+            </div>
+
+            {visible.length === 0 ? (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 text-center">
+                    <p className="text-slate-500">Nenhuma tarefa por aqui.</p>
+                    <p className="text-sm text-slate-400 mt-1">Clique em "Nova Tarefa" para começar.</p>
+                </div>
+            ) : (
+                <ul className="space-y-3">
+                    {visible.map((task) => (
+                        <li key={task.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex items-start gap-3">
+                            <button
+                                onClick={() => toggleStatus(task)}
+                                className={`mt-0.5 shrink-0 transition-colors ${task.status === 'concluida' ? 'text-emerald-500' : 'text-slate-300 hover:text-emerald-500'
+                                    }`}
+                                aria-label={task.status === 'concluida' ? 'Reabrir tarefa' : 'Concluir tarefa'}
+                            >
+                                {task.status === 'concluida' ? <CheckCircle2 size={22} /> : <Circle size={22} />}
+                            </button>
+
+                            <div className="flex-1 min-w-0">
+                                <p className={`font-semibold ${task.status === 'concluida' ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                                    {task.title}
+                                </p>
+                                {task.description && <p className="text-sm text-slate-500 truncate mt-0.5">{task.description}</p>}
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass[task.status]}`}>
+                                        {statusLabel[task.status]}
+                                    </span>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityClass[task.priority]}`}>
+                                        {priorityLabel[task.priority]}
+                                    </span>
+                                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                                        <CalendarDays size={14} /> {formatDate(task.due_date)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-1 shrink-0">
+                                <button
+                                    onClick={() => openEdit(task)}
+                                    aria-label="Editar tarefa"
+                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                >
+                                    <Pencil size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(task)}
+                                    aria-label="Excluir tarefa"
+                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            {modalOpen && <TaskModal initial={editing} onClose={() => setModalOpen(false)} onSave={handleSave} />}
+        </div>
+    );
 }

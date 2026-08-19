@@ -33,12 +33,12 @@ export default function Dashboard() {
   );
   const nome = user?.email?.split('@')[0] ?? '';
 
-  return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-800">Olá, {nome}! 👋</h1>
-        <p className="text-slate-500 mt-1 text-sm">Aqui está o resumo das suas tarefas.</p>
-      </div>
+    return (
+        <div className="max-w-6xl mx-auto p-4 md:p-8">
+            <div className="mb-8">
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-800">Olá, {nome}! 👋</h1>
+                <p className="text-slate-500 mt-1 text-sm">Aqui está o resumo das suas tarefas.</p>
+            </div>
 
       {loading ? (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 text-center">
