@@ -1,16 +1,20 @@
 // client/src/types.ts
-// Tipos do domínio de tarefas (espelham o modelo do backend FastAPI/Supabase).
-export type Priority = 'baixa' | 'media' | 'alta';
-export type Status = 'pendente' | 'em andamento' | 'concluida';
+// Tipos do domínio de tarefas (espelham a tabela 'tarefas' do Supabase).
+export type Priority = 'Baixa' | 'Média' | 'Alta';
+export type Status = 'Pendente' | 'Em andamento' | 'Concluída';
 
 export interface Task {
   id: string;
-  title: string;
-  description: string;
-  due_date: string; // formato YYYY-MM-DD
-  priority: Priority;
+  user_id: string;
+  titulo: string;
+  descricao: string | null;
+  data_limite: string | null; // formato YYYY-MM-DD
+  prioridade: Priority;
   status: Status;
+  categoria: string;
+  created_at: string;
+  updated_at: string | null;
 }
 
 // Dados informados no formulário (criação/edição)
-export type TaskInput = Omit<Task, 'id'>;
+export type TaskInput = Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>;

@@ -10,10 +10,11 @@ Cobertura mínima exigida no plano (Dia 3):
 
 def _payload(**overrides):
     data = {
-        "title": "Estudar para a prova de Redes",
-        "description": "Revisar camada de transporte.",
-        "priority": "alta",
-        "status": "pendente",
+        "titulo": "Estudar para a prova de Redes",
+        "descricao": "Revisar camada de transporte.",
+        "prioridade": "Alta",
+        "status": "Pendente",
+        "categoria": "Estudos",
     }
     data.update(overrides)
     return data
@@ -27,9 +28,9 @@ def test_post_task_valido_cria_tarefa_do_usuario_autenticado(client_user_a_tasks
 
     assert response.status_code == 201
     body = response.json()
-    assert body["title"] == "Estudar para a prova de Redes"
+    assert body["titulo"] == "Estudar para a prova de Redes"
     assert body["user_id"] == str(user_a.id)
-    assert body["status"] == "pendente"
+    assert body["status"] == "Pendente"
     assert "id" in body and "created_at" in body
 
 
@@ -39,8 +40,8 @@ def test_post_task_sem_autenticacao_retorna_401(client_tasks):
 
 
 def test_post_task_com_dados_invalidos_retorna_422(client_user_a_tasks):
-    # title vazio viola min_length=1 definido em TaskCreate (app/models.py)
-    response = client_user_a_tasks.post("/tasks", json=_payload(title=""))
+    # titulo vazio viola min_length=1 definido em TaskCreate (app/models.py)
+    response = client_user_a_tasks.post("/tasks", json=_payload(titulo=""))
     assert response.status_code == 422
 
 
@@ -50,14 +51,14 @@ def test_post_task_com_dados_invalidos_retorna_422(client_user_a_tasks):
 def test_get_tasks_autenticado_lista_apenas_as_proprias_tarefas(
     client_user_a_tasks, client_user_b_tasks
 ):
-    client_user_a_tasks.post("/tasks", json=_payload(title="Tarefa do usuário A"))
-    client_user_b_tasks.post("/tasks", json=_payload(title="Tarefa do usuário B"))
+    client_user_a_tasks.post("/tasks", json=_payload(titulo="Tarefa do usuário A"))
+    client_user_b_tasks.post("/tasks", json=_payload(titulo="Tarefa do usuário B"))
 
     response = client_user_a_tasks.get("/tasks")
 
     assert response.status_code == 200
-    titles = [task["title"] for task in response.json()]
-    assert titles == ["Tarefa do usuário A"]
+    titulos = [task["titulo"] for task in response.json()]
+    assert titulos == ["Tarefa do usuário A"]
 
 
 def test_get_tasks_sem_autenticacao_retorna_401(client_tasks):
@@ -72,11 +73,11 @@ def test_put_da_propria_tarefa_atualiza_com_sucesso(client_user_a_tasks):
     created = client_user_a_tasks.post("/tasks", json=_payload()).json()
 
     response = client_user_a_tasks.put(
-        f"/tasks/{created['id']}", json={"status": "concluida"}
+        f"/tasks/{created['id']}", json={"status": "Concluída"}
     )
 
     assert response.status_code == 200
-    assert response.json()["status"] == "concluida"
+    assert response.json()["status"] == "Concluída"
     assert response.json()["id"] == created["id"]
 
 
@@ -84,13 +85,13 @@ def test_put_da_tarefa_de_outro_usuario_falha(client_user_a_tasks, client_user_b
     created = client_user_a_tasks.post("/tasks", json=_payload()).json()
 
     response = client_user_b_tasks.put(
-        f"/tasks/{created['id']}", json={"status": "concluida"}
+        f"/tasks/{created['id']}", json={"status": "Concluída"}
     )
 
     assert response.status_code == 404
     # confirma que a tarefa do usuário A não foi alterada
     ainda_pendente = client_user_a_tasks.get(f"/tasks/{created['id']}").json()
-    assert ainda_pendente["status"] == "pendente"
+    assert ainda_pendente["status"] == "Pendente"
 
 
 # --- DELETE -----------------------------------------------------------------
