@@ -23,10 +23,12 @@ def _get_task_or_404(task_id: UUID, db: Client) -> dict:
 
 
 def _ensure_owner(task: dict, user_id: str) -> None:
+    # 404 em vez de 403: não confirmamos para um usuário não autorizado
+    # se a tarefa existe ou não, evitando vazar essa informação.
     if str(task["user_id"]) != str(user_id):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Você não tem permissão para acessar esta tarefa.",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarefa não encontrada.",
         )
 
 

@@ -8,6 +8,9 @@ pip install -r requirements.txt (se não tiver dependências instaladas)
 pytest -v
 """
 
+import uuid
+from datetime import datetime, timezone
+
 import pytest
 from uuid import UUID
 from unittest.mock import MagicMock
@@ -105,6 +108,14 @@ class _FakeQuery:
 
         if self._action == "insert":
             row = dict(self._payload)
+            # Num banco real (Postgres/Supabase) estes campos são gerados
+            # automaticamente na inserção. O fake precisa simular isso,
+            # senão a resposta falha a validação de TaskOut (id/created_at
+            # obrigatórios).
+            row.setdefault("id", str(uuid.uuid4()))
+            now = datetime.now(timezone.utc).isoformat()
+            row.setdefault("created_at", now)
+            row.setdefault("updated_at", now)
             rows.append(row)
             return SimpleNamespace(data=[row])
 
@@ -116,6 +127,7 @@ class _FakeQuery:
             for row in rows:
                 if self._matches(row):
                     row.update(self._payload)
+                    row["updated_at"] = datetime.now(timezone.utc).isoformat()
                     updated.append(row)
             return SimpleNamespace(data=updated)
 
