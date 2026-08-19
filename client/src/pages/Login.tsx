@@ -4,6 +4,8 @@ import { Activity } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 
+// Página de login do usuário. Se já estiver logado, redireciona para o dashboard.
+
 export default function Login() {
     const navigate = useNavigate();
     const { user } = useAuth();
