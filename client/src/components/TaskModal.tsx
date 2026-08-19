@@ -31,7 +31,13 @@ export default function TaskModal({ initial, onClose, onSave }: TaskModalProps) 
       setError('Informe a data limite.');
       return;
     }
-    onSave({ title: title.trim(), description: description.trim(), due_date: dueDate, priority, status });
+    onSave({
+      title: title.trim(),
+      description: description.trim() || null,
+      due_date: dueDate || null,
+      priority,
+      status,
+    });
   };
 
   return (

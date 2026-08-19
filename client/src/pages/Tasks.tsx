@@ -1,9 +1,9 @@
 // client/src/pages/Tasks.tsx
-// CRUD de tarefas (criar, editar, excluir, concluir) com dados mockados e feedback visual.
-import { useState } from 'react';
+// CRUD de tarefas (criar, editar, excluir, concluir) via API FastAPI + feedback visual.
+import { useCallback, useEffect, useState } from 'react';
 import { CalendarDays, CheckCircle2, Circle, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { Priority, Status, Task, TaskInput } from '../types';
-import { addTask, getTasks, removeTask, updateTask } from '../services/taskStore';
+import * as taskApi from '../services/taskApi';
 import TaskModal from '../components/TaskModal';
 
 const statusLabel: Record<Status, string> = {
@@ -39,10 +39,14 @@ const filters = [
 
 type FilterKey = (typeof filters)[number]['key'];
 
-const formatDate = (date: string) => new Date(date + 'T00:00:00').toLocaleDateString('pt-BR');
+const formatDate = (date: string | null) => {
+  if (!date) return '—';
+  return new Date(date + 'T00:00:00').toLocaleDateString('pt-BR');
+};
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState<Task[]>(() => getTasks());
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterKey>('todas');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
@@ -53,7 +57,20 @@ export default function Tasks() {
     window.setTimeout(() => setNotice(null), 4000);
   };
 
-  const refresh = () => setTasks(getTasks());
+  const loadTasks = useCallback(async () => {
+    try {
+      const data = await taskApi.fetchTasks();
+      setTasks(data);
+    } catch {
+      showNotice('error', 'Erro ao carregar tarefas.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTasks();
+  }, [loadTasks]);
 
   const openCreate = () => {
     setEditing(null);
@@ -65,32 +82,43 @@ export default function Tasks() {
     setModalOpen(true);
   };
 
-  const handleSave = (data: TaskInput) => {
-    if (editing) {
-      updateTask(editing.id, data);
-      showNotice('success', 'Tarefa atualizada com sucesso!');
-    } else {
-      addTask({ ...data, id: crypto.randomUUID() });
-      showNotice('success', 'Tarefa criada com sucesso!');
+  const handleSave = async (data: TaskInput) => {
+    try {
+      if (editing) {
+        await taskApi.updateTask(editing.id, data);
+        showNotice('success', 'Tarefa atualizada com sucesso!');
+      } else {
+        await taskApi.createTask(data);
+        showNotice('success', 'Tarefa criada com sucesso!');
+      }
+      setModalOpen(false);
+      setEditing(null);
+      loadTasks();
+    } catch {
+      showNotice('error', 'Erro ao salvar tarefa. Tente novamente.');
     }
-    setModalOpen(false);
-    setEditing(null);
-    refresh();
   };
 
-  const handleDelete = (task: Task) => {
-    if (window.confirm(`Excluir a tarefa "${task.title}"?`)) {
-      removeTask(task.id);
+  const handleDelete = async (task: Task) => {
+    if (!window.confirm(`Excluir a tarefa "${task.title}"?`)) return;
+    try {
+      await taskApi.deleteTask(task.id);
       showNotice('success', 'Tarefa excluída.');
-      refresh();
+      loadTasks();
+    } catch {
+      showNotice('error', 'Erro ao excluir tarefa.');
     }
   };
 
-  const toggleStatus = (task: Task) => {
+  const toggleStatus = async (task: Task) => {
     const next: Status = task.status === 'concluida' ? 'pendente' : 'concluida';
-    updateTask(task.id, { status: next });
-    showNotice('success', next === 'concluida' ? 'Tarefa concluída! 🎉' : 'Tarefa reaberta.');
-    refresh();
+    try {
+      await taskApi.updateTask(task.id, { status: next });
+      showNotice('success', next === 'concluida' ? 'Tarefa concluída! 🎉' : 'Tarefa reaberta.');
+      loadTasks();
+    } catch {
+      showNotice('error', 'Erro ao alterar status.');
+    }
   };
 
   const visible = filter === 'todas' ? tasks : tasks.filter((t) => t.status === filter);
@@ -138,7 +166,11 @@ export default function Tasks() {
         ))}
       </div>
 
-      {visible.length === 0 ? (
+      {loading ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 text-center">
+          <p className="text-slate-500">Carregando tarefas...</p>
+        </div>
+      ) : visible.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 text-center">
           <p className="text-slate-500">Nenhuma tarefa por aqui.</p>
           <p className="text-sm text-slate-400 mt-1">Clique em "Nova Tarefa" para começar.</p>
@@ -169,9 +201,11 @@ export default function Tasks() {
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityClass[task.priority]}`}>
                     {priorityLabel[task.priority]}
                   </span>
-                  <span className="flex items-center gap-1 text-xs text-slate-500">
-                    <CalendarDays size={14} /> {formatDate(task.due_date)}
-                  </span>
+                  {task.due_date && (
+                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                      <CalendarDays size={14} /> {formatDate(task.due_date)}
+                    </span>
+                  )}
                 </div>
               </div>
 
