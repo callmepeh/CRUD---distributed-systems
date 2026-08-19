@@ -1,4 +1,4 @@
-# Placeholder: tasks — Endpoints CRUD de Tarefas
+# routers/tasks.py — Endpoints CRUD de Tarefas
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,7 +10,8 @@ from app.models import TaskCreate, TaskOut, TaskUpdate
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
-TABLE = "tasks"
+TABLE = "tarefas"
+
 
 def _get_task_or_404(task_id: UUID, db: Client) -> dict:
     result = db.table(TABLE).select("*").eq("id", str(task_id)).execute()
