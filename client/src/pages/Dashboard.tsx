@@ -25,11 +25,11 @@ export default function Dashboard() {
   }, []);
 
   const total = tasks.length;
-  const concluidas = tasks.filter((t) => t.status === 'concluida').length;
-  const emAndamento = tasks.filter((t) => t.status === 'em andamento').length;
-  const pendentes = tasks.filter((t) => t.status === 'pendente').length;
+  const concluidas = tasks.filter((t) => t.status === 'Concluída').length;
+  const emAndamento = tasks.filter((t) => t.status === 'Em andamento').length;
+  const pendentes = tasks.filter((t) => t.status === 'Pendente').length;
   const atrasadas = tasks.filter(
-    (t) => t.status !== 'concluida' && t.due_date && new Date(t.due_date + 'T00:00:00') < new Date()
+    (t) => t.status !== 'Concluída' && t.data_limite && new Date(t.data_limite + 'T00:00:00') < new Date()
   );
   const nome = user?.email?.split('@')[0] ?? '';
 
@@ -64,8 +64,8 @@ export default function Dashboard() {
                 {atrasadas.map((t) => (
                   <li key={t.id} className="flex items-center gap-2 text-sm text-red-700">
                     <AlertTriangle size={16} className="shrink-0" />
-                    <span className="truncate">{t.title}</span>
-                    <span className="text-slate-400 ml-auto shrink-0">{formatDate(t.due_date)}</span>
+                    <span className="truncate">{t.titulo}</span>
+                    <span className="text-slate-400 ml-auto shrink-0">{formatDate(t.data_limite)}</span>
                   </li>
                 ))}
               </ul>
