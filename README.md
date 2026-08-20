@@ -103,16 +103,20 @@ npm run dev        # http://localhost:5173
 
 ## 2. Prints da interface
 
-> As imagens abaixo descrevem visualmente cada tela do sistema.
-
 ### Login
 Formulário de autenticação com campos **E-mail** e **Senha**. Exibe mensagens de erro caso as credenciais estejam incorretas. Possui link para a tela de cadastro.
+
+![Login](prints/Captura%20de%20tela%20de%202026-08-20%2019-10-03.png)
 
 ### Cadastro
 Formulário com campos **E-mail** e **Senha**. Exibe mensagem de sucesso após o cadastro e orienta o usuário a verificar o e-mail. Possui link para voltar ao login.
 
+![Cadastro](prints/Captura%20de%20tela%20de%202026-08-20%2019-10-17.png)
+
 ### Dashboard
 Visão geral com **cards de estatísticas** (total de tarefas, concluídas, em andamento, pendentes) e lista de **tarefas atrasadas** (com prazo estourado). Saudação personalizada com o nome do usuário.
+
+![Dashboard](prints/Captura%20de%20tela%20de%202026-08-20%2019-10-39.png)
 
 ### Minhas Tarefas
 Lista de todas as tarefas do usuário com **badges de status** (Pendente, Em andamento, Concluída) e **prioridade** (Baixa, Média, Alta). Inclui:
@@ -122,8 +126,12 @@ Lista de todas as tarefas do usuário com **badges de status** (Pendente, Em and
 - Botão de **concluir/reabrir** tarefa com um clique;
 - Mensagens de sucesso/erro em todas as operações.
 
+![Tarefas](prints/Captura%20de%20tela%20de%202026-08-20%2019-10-51.png)
+
 ### Modal de Criação/Edição
 Formulário com campos: **Título** (obrigatório, mínimo 3 caracteres), **Descrição**, **Data limite** (não permite datas anteriores a hoje), **Prioridade** (Baixa/Média/Alta), **Status** (Pendente/Em andamento/Concluída) e **Categoria**. Validação em tempo real com contadores de caracteres e mensagem de erro. Botões Cancelar e Salvar/Criar.
+
+![Modal de Criação/Edição](prints/Captura%20de%20tela%20de%202026-08-20%2019-10-58.png)
 
 ---
 
