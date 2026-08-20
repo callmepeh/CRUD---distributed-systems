@@ -1,18 +1,33 @@
-# Placeholder: auth — Dependência para validar JWT do Supabase
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from supabase import Client
+from jwt import PyJWKClient
+from pydantic import BaseModel
 
-from app.database import get_supabase_client
+from app.config import settings
+
 
 bearer_scheme = HTTPBearer(auto_error=False)
+
+_jwks_client: PyJWKClient | None = None
+
+
+def _get_jwks_client() -> PyJWKClient:
+    global _jwks_client
+    if _jwks_client is None:
+        _jwks_client = PyJWKClient(f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json")
+    return _jwks_client
+
+
+class CurrentUser(BaseModel):
+
+    id: str
+    email: str | None = None
 
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    db: Client = Depends(get_supabase_client),
-):
-
+) -> CurrentUser:
     if credentials is None or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -23,20 +38,26 @@ async def get_current_user(
     token = credentials.credentials
 
     try:
-        response = db.auth.get_user(token)
-    except Exception:
+        signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
+        payload = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["ES256"],
+            audience="authenticated",
+        )
+    except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido ou expirado.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = getattr(response, "user", None)
-    if user is None:
+    user_id = payload.get("sub")
+    if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido ou expirado.",
+            detail="Token inválido: usuário não identificado.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return user
+    return CurrentUser(id=user_id, email=payload.get("email"))
