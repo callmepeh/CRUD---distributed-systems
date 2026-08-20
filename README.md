@@ -25,6 +25,7 @@ tarefas associadas à sua conta.
 9. [Docker](#9-docker)
 10. [GitHub Actions (CI)](#10-github-actions-ci)
 11. [Design e métricas de IHC (Frontend)](#11-design-e-métricas-de-ihc-frontend)
+12. [Arquitetura do SD](#12-arquitetura-do-sd)
 
 ---
 
@@ -333,3 +334,25 @@ Interação Humano-Computador (IHC):
 Também foram consideradas as métricas de **eficácia** (ações completadas com
 feedback), **eficiência** (atalhos visuais: concluir tarefa com 1 clique) e
 **satisfação** (design limpo e responsivo).
+
+---
+## 12. Arquitetura do SD
+
+1. **Componentes:** `Cliente (Frontend)` React + Vite + TypeScript rodam no navegador do usuário (porta 5173). Consome a API REST e fala diretamente com o Supabase Auth para login/cadastro. `Servidor (Backend/API)` FastAPI (Python) roda em processo/container próprio (porta 8000). Expõe endpoints REST de tarefas (tasks, subjects), valida tokens JWT e aplica regras de negócio.
+`Supabase` serviço externo gerenciado com duas partes lógicas, banco de dados PostgreSQL (tabela tarefas) e serviço de Autenticação (emissão/validação de JWT, JWKS).
+2. **Compartilhamento:** `Dados`: a tabela tarefas no Postgres do Supabase é compartilhada entre todas as instâncias do backend e indiretamente pelo frontend (via Supabase Auth).
+``Estado de sessão/identidade``: o token JWT emitido pelo Supabase é compartilhado entre cliente e servidor como prova de autenticação.
+``Cada usuário só enxerga seus próprios dados`` (isolamento via user_id + Row Level Security no Postgres), mas a infraestrutura (banco, API) é compartilhada por todos os usuários simultaneamente.
+3. **Tipo de SD:** ``Combinação:`` Computação distribuída (cliente-servidor clássico: front consome API), combinado com informação distribuída (o núcleo do sistema é compartilhar e gerenciar dados, tarefas, entre usuários, persistidos centralmente no Supabase). Não é pervasivo (não envolve sensores, mobilidade ou dispositivos embarcados).
+4. **Transparência:** ``Transparência de acesso:`` o frontend chama a API REST (taskApi.ts) da mesma forma, seja localmente ou via Docker/rede, o usuário não percebe se é HTTP local ou remoto.
+``Transparência de localização:`` o cliente não precisa saber onde o Postgres do Supabase está fisicamente hospedado; conversa só com URLs (VITE_API_URL, SUPABASE_URL).
+``Transparência de replicação/gerência de dados:`` o Supabase abstrai réplicas, backups e gerenciamento do Postgres, nem cliente nem servidor lidam com isso diretamente.
+``Transparência de segurança:`` a validação de JWT via JWKS é interna ao backend; o usuário só percebe "logado" ou "erro 401", sem saber os detalhes de assinatura ES256.
+5. **Escalabilidade:** ``Horizontal (backend):`` por ser stateless (sem sessão em memória, tudo via JWT), múltiplas instâncias do FastAPI podem ser levantadas atrás de um load balancer sem coordenação extra.
+``Frontend:`` arquivos estáticos (build do Vite servidos via Nginx) escalam trivialmente com CDN/múltiplas réplicas.
+``Banco de dados:`` é o ponto mais delicado. Depende da escalabilidade do Supabase/Postgres; crescimento de usuários/tarefas pressiona esse componente central.
+``Hoje, via docker-compose,`` o sistema roda com uma instância de cada serviço, então escalabilidade real exigiria orquestração (ex.: Kubernetes) e um Postgres com mais capacidade/réplicas.
+6. **Falha:** ``Backend cai:`` frontend perde acesso à API de tarefas (erros de rede visíveis ao usuário), mas login/cadastro via Supabase Auth (chamado direto do client) continua funcionando, já que não depende do backend.
+``Frontend cai:`` usuários simplesmente não conseguem acessar a aplicação; backend continua de pé e responderia a outros clientes/API calls.
+``Supabase (banco/auth) cai:`` é o ponto mais crítico, sem banco, o backend não consegue ler/gravar tarefas (falhas em cascata nos endpoints); sem Auth, ninguém consegue logar nem validar tokens (JWKS inacessível trava a validação no auth.py), gerando falha total do sistema. É um ponto único de falha da arquitetura atual.
+``Falhas de token (expirado/inválido)`` são tratadas de forma isolada por requisição, retornando 401, sem derrubar o servidor.
