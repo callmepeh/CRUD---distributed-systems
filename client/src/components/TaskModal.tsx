@@ -13,6 +13,15 @@ interface TaskModalProps {
 const inputClass =
   'w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500';
 
+const MAX_TITULO = 100;
+const MAX_DESCRICAO = 500;
+const MAX_CATEGORIA = 50;
+
+function getTodayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
 export default function TaskModal({ initial, onClose, onSave }: TaskModalProps) {
   const [titulo, setTitulo] = useState(initial?.titulo ?? '');
   const [descricao, setDescricao] = useState(initial?.descricao ?? '');
@@ -21,24 +30,62 @@ export default function TaskModal({ initial, onClose, onSave }: TaskModalProps) 
   const [status, setStatus] = useState<Status>(initial?.status ?? 'Pendente');
   const [categoria, setCategoria] = useState(initial?.categoria ?? 'Geral');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const today = getTodayISO();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!titulo.trim()) {
+    setError('');
+
+    const trimmedTitulo = titulo.trim();
+    const trimmedDescricao = descricao.trim();
+    const trimmedCategoria = categoria.trim();
+
+    if (!trimmedTitulo) {
       setError('Informe um título para a tarefa.');
       return;
     }
+    if (trimmedTitulo.length > MAX_TITULO) {
+      setError(`O título deve ter no máximo ${MAX_TITULO} caracteres.`);
+      return;
+    }
+    if (trimmedTitulo.length < 3) {
+      setError('O título deve ter pelo menos 3 caracteres.');
+      return;
+    }
+
+    if (trimmedDescricao.length > MAX_DESCRICAO) {
+      setError(`A descrição deve ter no máximo ${MAX_DESCRICAO} caracteres.`);
+      return;
+    }
+
     if (!dataLimite) {
       setError('Informe a data limite.');
       return;
     }
+    if (dataLimite < today) {
+      setError('A data limite não pode ser anterior a hoje.');
+      return;
+    }
+
+    if (trimmedCategoria.length > MAX_CATEGORIA) {
+      setError(`A categoria deve ter no máximo ${MAX_CATEGORIA} caracteres.`);
+      return;
+    }
+    if (trimmedCategoria.length < 2 && trimmedCategoria.length > 0) {
+      setError('A categoria deve ter pelo menos 2 caracteres.');
+      return;
+    }
+
+    setSaving(true);
     onSave({
-      titulo: titulo.trim(),
-      descricao: descricao.trim() || null,
+      titulo: trimmedTitulo,
+      descricao: trimmedDescricao || null,
       data_limite: dataLimite || null,
       prioridade,
       status,
-      categoria,
+      categoria: trimmedCategoria || 'Geral',
     });
   };
 
@@ -79,8 +126,10 @@ export default function TaskModal({ initial, onClose, onSave }: TaskModalProps) 
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ex.: Estudar para a prova"
               className={inputClass}
+              maxLength={MAX_TITULO}
               autoFocus
             />
+            <p className="text-xs text-slate-400 mt-1 text-right">{titulo.length}/{MAX_TITULO}</p>
           </div>
 
           <div>
@@ -91,7 +140,9 @@ export default function TaskModal({ initial, onClose, onSave }: TaskModalProps) 
               rows={3}
               placeholder="Detalhes da tarefa (opcional)"
               className={inputClass}
+              maxLength={MAX_DESCRICAO}
             />
+            <p className="text-xs text-slate-400 mt-1 text-right">{descricao.length}/{MAX_DESCRICAO}</p>
           </div>
 
           <div>
@@ -101,7 +152,9 @@ export default function TaskModal({ initial, onClose, onSave }: TaskModalProps) 
               value={dataLimite}
               onChange={(e) => setDataLimite(e.target.value)}
               className={inputClass}
+              min={today}
             />
+            <p className="text-xs text-slate-400 mt-1">Não é possível selecionar datas anteriores a hoje.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -139,7 +192,9 @@ export default function TaskModal({ initial, onClose, onSave }: TaskModalProps) 
               onChange={(e) => setCategoria(e.target.value)}
               placeholder="Ex.: Estudos, Trabalho"
               className={inputClass}
+              maxLength={MAX_CATEGORIA}
             />
+            <p className="text-xs text-slate-400 mt-1 text-right">{categoria.length}/{MAX_CATEGORIA}</p>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -152,9 +207,10 @@ export default function TaskModal({ initial, onClose, onSave }: TaskModalProps) 
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {initial ? 'Salvar' : 'Criar'}
+              {saving ? 'Salvando...' : initial ? 'Salvar' : 'Criar'}
             </button>
           </div>
         </form>
