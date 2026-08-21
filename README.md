@@ -136,7 +136,69 @@ Formulário com campos: **Título** (obrigatório, mínimo 3 caracteres), **Desc
 
 ---
 
-## 3. Estrutura do código
+## 3. Backend: autenticação e endpoints da API
+
+O backend (server/) é uma API FastAPI stateless: não guarda sessão em memória, apenas valida o JWT emitido pelo Supabase a cada requisição — o que permite escalar múltiplas instâncias sem coordenação entre elas.
+
+### 3.1 Autenticação
+
+Toda rota de /tasks exige o header:
+
+´´´´ 
+Authorization: Bearer <token>
+````
+O token é o JWT emitido pelo Supabase Auth no login/cadastro (feito diretamente pelo frontend). O backend (app/auth.py):
+
+1.Busca a chave pública no endpoint JWKS do Supabase (_get_jwks_client, cacheada em processo);
+2.Valida a assinatura do token (ES256) e a audiência (authenticated);
+3.Extrai o sub (id do usuário) e o email do payload, retornando um CurrentUser.
+
+Erros de autenticação:
+
+| Situação | Resposta |
+|---|---|
+| Header `Authorization` ausente | `401 Unauthorized` |
+| Token malformado, inválido ou expirado | `401 Unauthorized` |
+| Token válido, mas sem `sub` no payload | `401 Unauthorized` |
+
+Além da autenticação, cada endpoint de tarefa confere a **posse** do recurso:
+se o `user_id` da tarefa não corresponde ao usuário do token, a API responde
+`404 Not Found` (em vez de `403`), para não revelar a um usuário não autorizado
+se a tarefa existe ou pertence a outra pessoa (`_ensure_owner` em `routers/tasks.py`).
+
+Além da autenticação, cada endpoint de tarefa confere a **posse** do recurso:
+se o `user_id` da tarefa não corresponde ao usuário do token, a API responde
+`404 Not Found` (em vez de `403`), para não revelar a um usuário não autorizado
+se a tarefa existe ou pertence a outra pessoa (`_ensure_owner` em `routers/tasks.py`).
+
+###3.1 Endpoints
+
+**`/tasks` (autenticado)**
+
+| Método | Rota | Descrição | Respostas |
+|---|---|---|---|
+| `POST` | `/tasks` | Cria uma tarefa associada ao usuário autenticado | `201` criada · `401` sem token · `422` payload inválido |
+| `GET` | `/tasks` | Lista apenas as tarefas do usuário autenticado, ordenadas por `created_at` desc | `200` · `401` sem token |
+| `GET` | `/tasks/{task_id}` | Busca uma tarefa específica do usuário autenticado | `200` · `404` se não existe ou é de outro usuário |
+| `PUT` | `/tasks/{task_id}` | Atualiza a tarefa (schema completo) | `200` · `404` se não é o dono |
+| `PATCH` | `/tasks/{task_id}` | Atualiza parcialmente a tarefa (campos opcionais) | `200` · `400` se nenhum campo enviado · `404` se não é o dono |
+| `DELETE` | `/tasks/{task_id}` | Remove a tarefa | `204` · `404` se não é o dono |
+
+**Campos de uma tarefa** (`titulo`, `descricao`, `data_limite`, `prioridade`, `status`, `categoria`):
+
+- `prioridade`: `Baixa` \| `Média` \| `Alta` (padrão `Média`)
+- `status`: `Pendente` \| `Em andamento` \| `Concluída` (padrão `Pendente`)
+- `categoria`: texto livre, até 50 caracteres (padrão `Geral`)
+- `titulo`: obrigatório na criação, 1–255 caracteres
+
+**Outros endpoints**
+
+| Rota | Descrição |
+|---|---|
+| `GET /health` | Health check sem autenticação — `200 {"status": "ok"}` |
+| `/subjects` | Placeholder reservado para um futuro CRUD de disciplinas — sem endpoints implementados no momento |
+
+## 4. Estrutura do código
 
 ```
 ├── client/                          # Frontend React + Vite + TypeScript
